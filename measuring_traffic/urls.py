@@ -7,12 +7,14 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+from core.views import IndexTemplateView
+
 schema_view = get_schema_view(
     openapi.Info(
         title="Djoser API",
         default_version="v1",
-        description="REST implementation of Django authentication system. djoser library provides a set of Django Rest Framework views to handle basic actions such as registration, login, logout, password reset and account activation. It works with custom user model.",
-        contact=openapi.Contact(email="contact@snippets.local"),
+        description="REST implementation of Django authentication system. Basic actions such as registration, login, logout, password reset and account activation. It works with custom user model.",
+        contact=openapi.Contact(email="usyllix@gmail.com"),
         license=openapi.License(name="BSD License"),
     ),
     public=True,
@@ -29,5 +31,5 @@ urlpatterns = [
     path("api/v1/", include("accounts.urls")),
     path("api/v1/", include("djoser.urls")),
     path("api/v1/", include("djoser.urls.jwt")),
-
+    re_path(r"^.*$", IndexTemplateView.as_view(), name="spa-entry-point")
 ]
