@@ -31,5 +31,7 @@ urlpatterns = [
     path("api/v1/", include("accounts.urls")),
     path("api/v1/", include("djoser.urls")),
     path("api/v1/", include("djoser.urls.jwt")),
-    re_path(r"^.*$", IndexTemplateView.as_view(), name="spa-entry-point")
+    path('map/', include('measurements.urls', namespace='measurements')),
+    path("api/v1/cars", include("cars.urls", namespace="cars"))
+    #re_path(r"^.*$", IndexTemplateView.as_view(), name="spa-entry-point")
 ]

@@ -27,7 +27,8 @@ SECRET_KEY = 'h3gd7vyp&wlr+p^tao4-arpr778y%9geov#ssum(3)(@wgsz*0'
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '10.128.0.2'
+    '10.128.0.2',
+    '127.0.0.1'
 ]
 
 
@@ -42,7 +43,7 @@ DJANGO_APPS = [
     'django.contrib.staticfiles',
 ]
 
-PROJECT_APPS = ["accounts"]
+PROJECT_APPS = ["accounts", "cars", "measurements"]
 
 THIRD_PARTY_APPS = [
     "rest_framework",
@@ -51,6 +52,8 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "crispy_forms",
+    "crispy_bootstrap4",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS + THIRD_PARTY_APPS
@@ -83,6 +86,8 @@ TEMPLATES = [
         },
     },
 ]
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 WSGI_APPLICATION = 'measuring_traffic.wsgi.application'
 
@@ -135,6 +140,10 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend", 
+]
 
 # DJOSER CONFIG
 DJOSER = {
@@ -191,7 +200,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-
+GEOIP_PATH = os.path.join(BASE_DIR, 'geoip')
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
