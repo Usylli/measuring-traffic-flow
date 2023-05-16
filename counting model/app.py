@@ -1,6 +1,10 @@
 import cv2
+import geojson
 import numpy as np
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template, send_file, request
+import pandas as pd
+import folium
+from folium.plugins import HeatMapWithTime
 
 app = Flask(__name__)
 
@@ -82,3 +86,125 @@ def generate():
 @app.route('/video_feed')
 def video_feed():
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/road_loads_dates')
+def get_dates():
+    # Read the CSV file
+    df = pd.read_csv('data.csv')
+
+    # Convert the 'datetime' column to a pandas datetime object
+    df['datetime'] = pd.to_datetime(df['datetime'])
+
+    # Get unique dates from the 'datetime' column
+    unique_dates = df['datetime'].dt.date.unique()
+
+    return unique_dates.tolist()
+
+@app.route('/road_loads')
+async def get_html():
+    args = request.args
+    
+    # Read the CSV file
+    df = pd.read_csv('data.csv')
+
+    # Convert the 'datetime' column to a pandas datetime object
+    df['datetime'] = pd.to_datetime(df['datetime'])
+
+    # Get unique dates from the 'datetime' column
+    unique_dates = df['datetime'].dt.date.unique()
+
+    inputed_date = args.get('date')
+    selected_date_index = unique_dates.index(inputed_date)
+    selected_date = unique_dates[selected_date_index]
+
+    # Filter the data for the selected date
+    selected_df = df[df['datetime'].dt.date == selected_date]
+
+    # Group the data by latitude and longitude
+    groups = selected_df.groupby(['latitude', 'longitude']).size().reset_index(name='count')
+
+    # Create a map centered around the city
+    map_center = (df['latitude'].mean(), df['longitude'].mean())
+    m = folium.Map(location=map_center, zoom_start=12)
+
+    # # Create points on the map for each group
+    # for _, group in groups.iterrows():
+    #     folium.CircleMarker(
+    #         location=(group['latitude'], group['longitude']),
+    #         radius=5,
+    #         color='blue',
+    #         fill=True,
+    #         fill_color='blue'
+    #     ).add_to(m)
+
+    # Create hourly load data for HeatMapWithTime
+    hourly_load_data = []
+    for hour in range(24):
+        hour_data = selected_df[selected_df['datetime'].dt.hour == hour]
+        hourly_load_data.append(hour_data[['latitude', 'longitude']].values.tolist())
+
+    # Add HeatMapWithTime to the map
+    HeatMapWithTime(hourly_load_data).add_to(m)
+    # Create a legend
+    legend_html = """
+        <div style="position: fixed; 
+                    bottom: 50px; left: 50px; width: 150px; height: 90px; 
+                    border:2px solid grey; z-index:9999; font-size:14px;
+                    background-color: #FFFFFF;
+                    ">
+        &nbsp; Load Legend <br>
+        &nbsp; Low: <i class="fa fa-circle fa-1x" style="color:#00FF00"></i><br>
+        &nbsp; Medium: <i class="fa fa-circle fa-1x" style="color:#FFFF00"></i><br>
+        &nbsp; High: <i class="fa fa-circle fa-1x" style="color:#FF0000"></i>
+        </div>
+        """
+
+    # Add the legend to the map
+    m.get_root().html.add_child(folium.Element(legend_html))
+
+    # Save the map as an HTML file
+    await m.save('load_map.html')
+    return send_file('load_map.html', as_attachment=True)
+
+@app.route('/road_loads_geojson')
+async def get_geojson():
+    args = request.args
+    
+    # Read the CSV file
+    df = pd.read_csv('data.csv')
+
+    # Convert the 'datetime' column to a pandas datetime object
+    df['datetime'] = pd.to_datetime(df['datetime'])
+
+    # Get unique dates from the 'datetime' column
+    unique_dates = df['datetime'].dt.date.unique()
+
+    inputed_date = args.get('date')
+    selected_date_index = unique_dates.index(inputed_date)
+    selected_date = unique_dates[selected_date_index]
+
+    selected_df = df[df['datetime'].dt.date == selected_date]
+
+    # Group the data by latitude, longitude, and hour
+    groups = selected_df.groupby(['latitude', 'longitude', selected_df['datetime'].dt.hour]).size().reset_index(name='count')
+
+    # Create a GeoJSON object
+    features = []
+    for _, group in groups.iterrows():
+        feature = geojson.Feature(
+            geometry=geojson.Point((group['longitude'], group['latitude'])),
+            properties={
+                'load': group['count'],
+                'time': group['datetime']
+            }
+        )
+        features.append(feature)
+
+    geojson_object = geojson.FeatureCollection(features)
+
+    # Save the GeoJSON object to a file
+    with open('load_data.geojson', 'w') as f:
+        geojson.dump(geojson_object, f)
+    
+    return send_file('load_data.geojson', as_attachment=True)
+
