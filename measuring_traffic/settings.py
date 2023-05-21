@@ -27,7 +27,7 @@ SECRET_KEY = 'h3gd7vyp&wlr+p^tao4-arpr778y%9geov#ssum(3)(@wgsz*0'
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '10.128.0.2',
+    '34.118.42.3',
     '127.0.0.1'
 ]
 
@@ -102,7 +102,7 @@ DATABASES = {
         'USER': 'devuser',
         'PASSWORD': '123456',
         'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'PORT': '5433',
     }
 }
 

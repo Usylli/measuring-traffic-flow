@@ -64,5 +64,5 @@ legend_html = """
 m.get_root().html.add_child(folium.Element(legend_html))
 
 # Save the map as an HTML file
-#m.save('load_map.html')
-print(m.save('load_map.geojson'))
+m.save('load_map.html')
+#print(m.save('load_map.geojson'))
