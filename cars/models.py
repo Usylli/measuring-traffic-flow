@@ -5,4 +5,9 @@ class CarsLocation(models.Model):
     datetime = models.DateTimeField()
     latitude = models.CharField(max_length=255)
     longitude = models.CharField(max_length=255)
-    
+
+class Incidents(models.Model):
+    latitude = models.CharField(max_length=255)
+    longitude = models.CharField(max_length=255)
+    datetime = models.DateTimeField(auto_now=True)
+    comment = models.CharField(max_length=255)
