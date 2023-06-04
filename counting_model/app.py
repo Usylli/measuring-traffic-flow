@@ -102,6 +102,7 @@ def get_dates():
 
     # Get unique dates from the 'datetime' column
     unique_dates = df['datetime'].dt.date.unique()
+    unique_dates.sort(axis=0)
     
     return dict(enumerate([date.strftime('%Y-%m-%d') for date in unique_dates], 1))
 
