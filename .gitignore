@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+road_loads/
+geoip/
+frontend/
+.mp4
+.csv
