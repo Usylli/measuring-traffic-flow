@@ -151,23 +151,18 @@ def get_dates():
 def get_html():
     args = request.args
 
-    # Read the CSV file
     df = pd.read_csv('data.csv')
 
-    # Convert the 'datetime' column to a pandas datetime object
     df['datetime'] = pd.to_datetime(df['datetime'])
 
-    # Get unique dates from the 'datetime' column
     unique_dates = df['datetime'].dt.date.unique()
 
     inputed_date = args.get('date')
     selected_date_index = int(inputed_date) - 1
     selected_date = unique_dates[selected_date_index]
 
-    # Filter the data for the selected date
     selected_df = df[df['datetime'].dt.date == selected_date]
 
-    # Group the data by latitude and longitude
     groups = selected_df.groupby(
         ['latitude', 'longitude']).size().reset_index(name='count')
 
@@ -185,16 +180,15 @@ def get_html():
     #         fill_color='blue'
     #     ).add_to(m)
 
-    # Create hourly load data for HeatMapWithTime
+    #create hourly load data for HeatMapWithTime
     hourly_load_data = []
     for hour in range(24):
         hour_data = selected_df[selected_df['datetime'].dt.hour == hour]
         hourly_load_data.append(
             hour_data[['latitude', 'longitude']].values.tolist())
-
-    # Add HeatMapWithTime to the map
+    
     HeatMapWithTime(hourly_load_data).add_to(m)
-    # Create a legend
+    #legend
     legend_html = """
         <div style="position: fixed; 
                     bottom: 50px; left: 50px; width: 150px; height: 90px; 
@@ -208,10 +202,8 @@ def get_html():
         </div>
         """
 
-    # Add the legend to the map
     m.get_root().html.add_child(folium.Element(legend_html))
 
-    # Save the map as an HTML file
     m.save('templates/load_map.html')
     return send_file('load_map.html')
 
@@ -221,13 +213,9 @@ def get_html():
 def get_geojson():
     args = request.args
 
-    # Read the CSV file
     df = pd.read_csv('data.csv')
 
-    # Convert the 'datetime' column to a pandas datetime object
     df['datetime'] = pd.to_datetime(df['datetime'])
-
-    # Get unique dates from the 'datetime' column
     unique_dates = df['datetime'].dt.date.unique()
 
     inputed_date = args.get('date')
@@ -236,11 +224,10 @@ def get_geojson():
 
     selected_df = df[df['datetime'].dt.date == selected_date]
 
-    # Group the data by latitude, longitude, and hour
+    #group the data by latitude, longitude, and hour
     groups = selected_df.groupby(
         ['latitude', 'longitude', selected_df['datetime'].dt.hour]).size().reset_index(name='count')
 
-    # Create a GeoJSON object
     features = []
     for _, group in groups.iterrows():
         feature = geojson.Feature(
@@ -254,7 +241,6 @@ def get_geojson():
 
     geojson_object = geojson.FeatureCollection(features)
 
-    # Save the GeoJSON object to a file
     with open('load_data.geojson', 'w') as f:
         geojson.dump(geojson_object, f)
 
