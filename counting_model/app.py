@@ -12,13 +12,13 @@ app = Flask(__name__)
 CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-def center_handle(x,y,w,h):
-    x1=int(w/2)
-    y1=int(h/2)
-    cx=x+x1
-    cy=y+y1
-    return cx,cy
 
+def center_handle(x, y, w, h):
+    x1 = int(w/2)
+    y1 = int(h/2)
+    cx = x+x1
+    cy = y+y1
+    return cx, cy
 
 
 @app.route('/')
@@ -33,13 +33,17 @@ def generate():
     min_width_react = 80
     min_height_react = 80
 
-    count_line_position = 550
+    count_line_position = 600
 
     algo = cv2.createBackgroundSubtractorMOG2()
     detect = []
     offset = 6
     counter = 0
+    frame_counter = 0
     while True:
+        # if frame_counter < 10:
+        #     frame_counter += 1
+        #     continue
         ret, frame1 = cap.read()
         if not ret:
             break
@@ -50,35 +54,68 @@ def generate():
         dilat = cv2.dilate(img_sub, np.ones((5, 5)))
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
         dilatada = cv2.morphologyEx(dilat, cv2.MORPH_CLOSE, kernel)
-        counterShape, h = cv2.findContours(dilatada, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        counterShape, h = cv2.findContours(
+            dilatada, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        cv2.line(frame1, (25, count_line_position), (1200, count_line_position), (255, 127, 0), 3)
+        # cv2.line(frame1, (25, count_line_position), (1200, count_line_position), (255, 127, 0), 3)
+        cv2.line(frame1, (150, count_line_position),
+                 (150, count_line_position-offset), (255, 127, 0), 3)
+        cv2.line(frame1, (150, count_line_position),
+                 (150, count_line_position+offset), (255, 127, 0), 3)
+        cv2.line(frame1, (150, count_line_position+offset),
+                 (520, count_line_position+offset), (255, 127, 0), 3)
+        cv2.line(frame1, (150, count_line_position-offset),
+                 (520, count_line_position-offset), (255, 127, 0), 3)
+        cv2.line(frame1, (720, count_line_position+offset),
+                 (1060, count_line_position+offset), (255, 127, 0), 3)
+        cv2.line(frame1, (720, count_line_position-offset),
+                 (1060, count_line_position-offset), (255, 127, 0), 3)
+        cv2.line(frame1, (150, count_line_position),
+                 (150, count_line_position-offset), (255, 127, 0), 3)
+        cv2.line(frame1, (150, count_line_position),
+                 (150, count_line_position+offset), (255, 127, 0), 3)
+        cv2.line(frame1, (520, count_line_position),
+                 (520, count_line_position-offset), (255, 127, 0), 3)
+        cv2.line(frame1, (520, count_line_position),
+                 (520, count_line_position+offset), (255, 127, 0), 3)
+        cv2.line(frame1, (720, count_line_position),
+                 (720, count_line_position+offset), (255, 127, 0), 3)
+        cv2.line(frame1, (720, count_line_position),
+                 (720, count_line_position-offset), (255, 127, 0), 3)
+        cv2.line(frame1, (1060, count_line_position),
+                 (1060, count_line_position+offset), (255, 127, 0), 3)
+        cv2.line(frame1, (1060, count_line_position),
+                 (1060, count_line_position-offset), (255, 127, 0), 3)
 
         for (i, c) in enumerate(counterShape):
             (x, y, w, h) = cv2.boundingRect(c)
-            validate_counter = (w >= min_width_react) and (h >= min_height_react)
+            validate_counter = (w >= min_width_react) and (
+                h >= min_height_react)
             if not validate_counter:
                 continue
 
-            cv2.rectangle(frame1, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.putText(frame1, "Vehicle" + str(counter), (x, y - 20), cv2.FONT_HERSHEY_TRIPLEX, 1, (255, 244, 0), 2)
+            # cv2.rectangle(frame1, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            # cv2.putText(frame1, "Vehicle" + str(counter), (x, y - 20), cv2.FONT_HERSHEY_TRIPLEX, 1, (255, 244, 0), 2)
 
             center = center_handle(x, y, w, h)
             detect.append(center)
             cv2.circle(frame1, center, 4, (0, 0, 255), -1)
 
             for (x, y) in detect:
-                if y < (count_line_position + offset) and y > (count_line_position - offset):
+                if ((y < (count_line_position + offset) and y > (count_line_position - offset))
+                        and ((x > 150 and x < 520) or (x > 720 and x < 1060))):
                     counter += 1
-                cv2.line(frame1, (25, count_line_position), (1200, count_line_position), (0, 127, 255), 3)
+                # cv2.line(frame1, (25, count_line_position), (1200, count_line_position), (0, 127, 255), 3)
                 detect.remove((x, y))
-                print("Vehicle Counter:" + str(counter))
+                # print("Vehicle Counter:" + str(counter))
 
-        cv2.putText(frame1, "VEHICLE COUNTER :" + str(counter), (450, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
+        cv2.putText(frame1, "VEHICLE COUNTER :" + str(counter),
+                    (600, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
         # Encode the output image to JPEG format
         ret, jpeg = cv2.imencode('.jpg', frame1)
         frame = jpeg.tobytes()
+        # frame_counter = 0
 
         # Yield the output image as a byte stream
         yield (b'--frame\r\n'
@@ -86,10 +123,12 @@ def generate():
 
     cap.release()
 
+
 @app.route('/video_feed')
 @cross_origin(origin='*')
 def video_feed():
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
 
 @app.route('/road_loads_dates')
 @cross_origin(origin='*')
@@ -103,14 +142,15 @@ def get_dates():
     # Get unique dates from the 'datetime' column
     unique_dates = df['datetime'].dt.date.unique()
     unique_dates.sort(axis=0)
-    
+
     return dict(enumerate([date.strftime('%Y-%m-%d') for date in unique_dates], 1))
+
 
 @app.route('/road_loads')
 @cross_origin(origin='*')
 def get_html():
     args = request.args
-    
+
     # Read the CSV file
     df = pd.read_csv('data.csv')
 
@@ -128,7 +168,8 @@ def get_html():
     selected_df = df[df['datetime'].dt.date == selected_date]
 
     # Group the data by latitude and longitude
-    groups = selected_df.groupby(['latitude', 'longitude']).size().reset_index(name='count')
+    groups = selected_df.groupby(
+        ['latitude', 'longitude']).size().reset_index(name='count')
 
     # Create a map centered around the city
     map_center = (df['latitude'].mean(), df['longitude'].mean())
@@ -148,7 +189,8 @@ def get_html():
     hourly_load_data = []
     for hour in range(24):
         hour_data = selected_df[selected_df['datetime'].dt.hour == hour]
-        hourly_load_data.append(hour_data[['latitude', 'longitude']].values.tolist())
+        hourly_load_data.append(
+            hour_data[['latitude', 'longitude']].values.tolist())
 
     # Add HeatMapWithTime to the map
     HeatMapWithTime(hourly_load_data).add_to(m)
@@ -173,11 +215,12 @@ def get_html():
     m.save('templates/load_map.html')
     return send_file('load_map.html')
 
+
 @app.route('/road_loads_geojson')
 @cross_origin(origin='*')
 def get_geojson():
     args = request.args
-    
+
     # Read the CSV file
     df = pd.read_csv('data.csv')
 
@@ -194,7 +237,8 @@ def get_geojson():
     selected_df = df[df['datetime'].dt.date == selected_date]
 
     # Group the data by latitude, longitude, and hour
-    groups = selected_df.groupby(['latitude', 'longitude', selected_df['datetime'].dt.hour]).size().reset_index(name='count')
+    groups = selected_df.groupby(
+        ['latitude', 'longitude', selected_df['datetime'].dt.hour]).size().reset_index(name='count')
 
     # Create a GeoJSON object
     features = []
@@ -213,6 +257,5 @@ def get_geojson():
     # Save the GeoJSON object to a file
     with open('load_data.geojson', 'w') as f:
         geojson.dump(geojson_object, f)
-    
-    return geojson_object
 
+    return geojson_object
